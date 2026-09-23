@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance &amp; Assignment Tracker</title>
+  <meta name="description" content="Personal daily attendance logging and assignment tracking tool. Local-first, fast, and stress-free.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <!-- App Container -->
+  <div id="app" class="app-layout">
+    
+    <!-- Top Bar with Top-Left Total Attendance Badge -->
+    <header class="top-header">
+      <div class="header-left">
+        <div class="total-attendance-card" id="totalAttendanceBadge" title="Overall cumulative attendance (Core Subjects + Institutional / Misc)">
+          <div class="metric-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <div class="metric-info">
+            <div class="metric-label-row">
+              <span class="metric-label">Total Attendance</span>
+              <button class="btn-institutional-gear" id="btnOpenInstitutionalModal" title="Edit Institutional / Misc Data (Portal Categories)" aria-label="Edit Institutional Data">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div class="metric-value-row">
+              <span class="metric-percentage" id="overallPercentage">--%</span>
+              <span class="metric-fraction" id="overallFraction">(0 / 0 classes)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <h1 class="app-title">Tracker</h1>
+      </div>
+
+      <div class="header-right">
+        <nav class="view-nav" role="tablist">
+          <button class="nav-tab active" id="tabDashboard" data-view="dashboard" role="tab" aria-selected="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-tab" id="tabAssignments" data-view="assignments" role="tab" aria-selected="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="m9 14 2 2 4-4"></path></svg>
+            <span>Assignments</span>
+            <span class="nav-badge" id="pendingAssignmentsBadge">0</span>
+          </button>
+          <button class="nav-tab" id="tabHistory" data-view="history" role="tab" aria-selected="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span>Logs</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="main-container">
+      
+      <!-- VIEW 1: Dashboard / Subject Cards -->
+      <section id="viewDashboard" class="view-section active">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Enrolled Subjects</h2>
+            <p class="section-subtitle">Real-time cumulative attendance and active assignments overview.</p>
+          </div>
+          <div class="today-status-chip" id="todayStatusChip">
+            <span class="status-dot"></span>
+            <span id="todayStatusChipText">Today: Not logged yet</span>
+          </div>
+        </div>
+
+        <div class="subjects-grid" id="subjectsGrid">
+          <!-- Dynamically populated subject cards -->
+        </div>
+      </section>
+
+      <!-- VIEW 2: Assignments Central Hub -->
+      <section id="viewAssignments" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Assignments &amp; Deadlines</h2>
+            <p class="section-subtitle">Manage coursework, homework, and lab submissions across all subjects.</p>
+          </div>
+          <button class="btn btn-primary" id="btnOpenGlobalAddAssignment">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            New Assignment
+          </button>
+        </div>
+
+        <!-- Filter bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <label for="assignmentSubjectFilter">Subject:</label>
+            <select id="assignmentSubjectFilter" class="form-select">
+              <option value="ALL">All Subjects</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="assignmentStatusFilter">Status:</label>
+            <select id="assignmentStatusFilter" class="form-select">
+              <option value="ALL">All Statuses</option>
+              <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
+              <option value="submitted">Submitted</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="assignments-list" id="allAssignmentsList">
+          <!-- Dynamically populated assignments list -->
+        </div>
+      </section>
+
+      <!-- VIEW 3: History / Daily Logs -->
+      <section id="viewHistory" class="view-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Attendance Log History</h2>
+            <p class="section-subtitle">Timeline of recorded daily attendance entries.</p>
+          </div>
+          <div class="history-actions">
+            <button class="btn btn-secondary btn-sm" id="btnExportData">Export Backup</button>
+            <button class="btn btn-secondary btn-sm" id="btnImportData">Import Backup</button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none;">
+          </div>
+        </div>
+
+        <div class="history-timeline" id="historyTimeline">
+          <!-- Dynamically populated history logs -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FLOATING QUICK-LOG WIDGET (Bottom Right Corner) -->
+    <aside class="floating-quick-widget" id="floatingQuickWidget" aria-label="Daily quick logging widget">
+      <!-- Widget Header -->
+      <div class="widget-header">
+        <div class="widget-date-wrap">
+          <span class="widget-label">Daily Log</span>
+          <span class="widget-date" id="widgetTodayDate">Loading...</span>
+        </div>
+        <button class="widget-collapse-toggle" id="widgetMinimizeBtn" title="Minimize / Expand Widget" aria-label="Minimize or Expand">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+      </div>
+
+      <!-- Widget Body / Unlogged State -->
+      <div class="widget-body" id="widgetUnloggedState">
+        <p class="widget-prompt">How was your college day today?</p>
+        <div class="widget-action-grid">
+          <button class="widget-btn widget-btn-attended" id="btnQuickAttended">
+            <span class="btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </span>
+            <span class="btn-text">Attended</span>
+          </button>
+          <button class="widget-btn widget-btn-holiday" id="btnQuickHoliday">
+            <span class="btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+            </span>
+            <span class="btn-text">Holiday</span>
+          </button>
+          <button class="widget-btn widget-btn-leave" id="btnQuickLeave">
+            <span class="btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </span>
+            <span class="btn-text">Leave</span>
+          </button>
+        </div>
+
+        <!-- 4th Button (Revealed when Attended is selected) -->
+        <div class="widget-revealed-action" id="widgetClassActionWrap" style="display:none;">
+          <button class="widget-btn-classes" id="btnOpenClassLogger">
+            <span class="btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="8" y1="2" x2="8" y2="6"></line><line x1="16" y1="2" x2="16" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            </span>
+            <span>Log classes happened</span>
+            <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Widget Body / Logged Confirmed State -->
+      <div class="widget-body" id="widgetLoggedState" style="display:none;">
+        <div class="logged-badge-card">
+          <div class="logged-badge-icon" id="loggedStatusIcon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <div class="logged-badge-text">
+            <span class="logged-title" id="loggedStatusTitle">Today is recorded</span>
+            <span class="logged-subtitle" id="loggedStatusSubtitle">Status: Holiday</span>
+          </div>
+        </div>
+        <div class="widget-logged-actions">
+          <button class="btn-text-action" id="btnEditTodayLog">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            Edit today's log
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN TRACKER PANEL (Modal dialog opens from "Log classes happened") -->
+    <div class="modal-backdrop" id="mainTrackerModal" role="dialog" aria-modal="true" aria-labelledby="trackerModalTitle">
+      <div class="modal-dialog tracker-panel-dialog">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="modal-header-info">
+            <div class="modal-pre-title">Daily Subject Attendance</div>
+            <h2 class="modal-title" id="trackerModalTitle">Log Classes for Today</h2>
+            <span class="modal-date-tag" id="trackerModalDate">Sep 23, 2026</span>
+          </div>
+          <button class="modal-close-btn" id="btnCloseTrackerModal" aria-label="Close Tracker Panel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+
+        <!-- Modal Instructions -->
+        <div class="modal-helper-bar">
+          <span class="helper-text">Select what happened for each subject today. Unselected subjects default to "Didn't happen".</span>
+        </div>
+
+        <!-- Subjects List Inside Tracker Panel -->
+        <div class="tracker-subjects-container" id="trackerSubjectsList">
+          <!-- Generated per-subject rows -->
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <div class="modal-summary-preview" id="trackerModalSummaryPreview">
+            <span>0 classes attended &bull; 0 absent &bull; 9 not held</span>
+          </div>
+          <div class="modal-buttons">
+            <button class="btn btn-ghost" id="btnCancelTrackerModal">Cancel</button>
+            <button class="btn btn-primary" id="btnSaveTodayLog">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Save today's log
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT ASSIGNMENT -->
+    <div class="modal-backdrop" id="assignmentModal" role="dialog" aria-modal="true" aria-labelledby="assignmentModalTitle">
+      <div class="modal-dialog small-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title" id="assignmentModalTitle">Add Assignment</h3>
+          <button class="modal-close-btn" id="btnCloseAssignmentModal" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <form id="assignmentForm" class="modal-form">
+          <input type="hidden" id="assignmentFormId" value="">
+          
+          <div class="form-group">
+            <label for="assignmentSubjectSelect">Subject</label>
+            <select id="assignmentSubjectSelect" class="form-select" required>
+              <!-- Options filled by JS -->
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="assignmentTitleInput">Assignment Title</label>
+            <input type="text" id="assignmentTitleInput" class="form-input" placeholder="e.g. Assignment 2 - Graph Algorithms" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="assignmentDueDateInput">Due Date</label>
+              <input type="date" id="assignmentDueDateInput" class="form-input" required>
+            </div>
+            <div class="form-group flex-1">
+              <label for="assignmentStatusSelect">Status</label>
+              <select id="assignmentStatusSelect" class="form-select">
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="submitted">Submitted</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer form-actions">
+            <button type="button" class="btn btn-ghost" id="btnCancelAssignmentModal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveAssignment">Save Assignment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: EDIT INSTITUTIONAL / MISC DATA -->
+    <div class="modal-backdrop" id="institutionalModal" role="dialog" aria-modal="true" aria-labelledby="institutionalModalTitle">
+      <div class="modal-dialog small-dialog">
+        <div class="modal-header">
+          <div>
+            <div class="modal-pre-title">Portal Categories</div>
+            <h3 class="modal-title" id="institutionalModalTitle">Institutional Attendance</h3>
+          </div>
+          <button class="modal-close-btn" id="btnCloseInstitutionalModal" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <form id="institutionalForm" class="modal-form">
+          <div class="modal-helper-bar" style="margin-bottom: 16px; border-radius: 8px; border: 1px solid var(--border-subtle);">
+            <span class="helper-text">Covers non-daily college portal categories (ORIENTATIO, CRT Aptitude, CRT Technical, etc.) that factor into your Total Attendance.</span>
+          </div>
+
+          <div class="form-row" style="padding: 0 24px;">
+            <div class="form-group flex-1">
+              <label for="institutionalHeldInput">Classes Held</label>
+              <input type="number" min="0" id="institutionalHeldInput" class="form-input" required>
+            </div>
+            <div class="form-group flex-1">
+              <label for="institutionalAttendedInput">Classes Attended</label>
+              <input type="number" min="0" id="institutionalAttendedInput" class="form-input" required>
+            </div>
+          </div>
+
+          <div style="padding: 0 24px 16px 24px; font-size: 0.78rem; color: var(--text-dim);">
+            Current seeded baseline: <strong>41 Held / 6 Attended</strong>
+          </div>
+
+          <div class="modal-footer form-actions">
+            <button type="button" class="btn btn-ghost" id="btnCancelInstitutionalModal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveInstitutional">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
